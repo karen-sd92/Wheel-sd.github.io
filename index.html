@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1020">
+<title>گردونه شانس | انتخاب تصادفی</title>
+<style>
+:root{--bg:#090e1d;--panel:rgba(255,255,255,.075);--line:rgba(255,255,255,.14);--muted:#aeb8d2;--violet:#a78bfa;--cyan:#67e8f9}
+*{box-sizing:border-box}
+/* Keep buttons visually steady after taps/clicks; suppress browser focus and touch rings. */
+button{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
+button:focus,button:focus-visible{outline:none}
+.glass:active{transform:none;filter:none}
+body{margin:0;min-height:100vh;color:#f7f8ff;font-family:Tahoma,Arial,sans-serif;background:radial-gradient(ellipse at 18% 22%,rgba(89,75,160,.20) 0%,transparent 34%),radial-gradient(ellipse at 84% 34%,rgba(40,113,145,.13) 0%,transparent 30%),radial-gradient(ellipse at 50% -15%,#39316c 0%,#171b37 34%,#090e1d 75%);overflow-x:hidden;position:relative}
+/* A very subtle galaxy layer: sparse stars and faint nebula, kept behind the interface. */
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.28;background-image:radial-gradient(1.5px 1.5px at 12% 18%,rgba(255,255,255,.9) 50%,transparent 100%),radial-gradient(1px 1px at 28% 72%,rgba(205,220,255,.9) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 73% 16%,rgba(255,255,255,.8) 50%,transparent 100%),radial-gradient(1px 1px at 88% 63%,rgba(190,220,255,.8) 50%,transparent 100%),radial-gradient(1px 1px at 58% 86%,rgba(255,255,255,.7) 50%,transparent 100%),radial-gradient(1px 1px at 43% 37%,rgba(220,205,255,.7) 50%,transparent 100%);background-size:100% 100%}
+main{position:relative;z-index:1}
+main{width:min(1120px,94%);margin:auto;padding:36px 0 54px}
+header{text-align:center;margin-bottom:28px}
+h1{font-size:clamp(2rem,5vw,3.3rem);margin:0 0 10px;letter-spacing:-1px;background:linear-gradient(90deg,#fff,#c4b5fd,#a5f3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{color:var(--muted);line-height:1.9;margin:0}
+.layout{display:grid;grid-template-columns:minmax(290px,.85fr) minmax(320px,1.15fr);gap:22px;align-items:start}
+.panel{background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.035));border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:0 22px 65px #0005;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.panel h2{font-size:18px;margin:0 0 8px}
+.sub{font-size:13px;color:var(--muted);line-height:1.8;margin:0 0 16px}
+.name-list{display:grid;gap:9px;max-height:420px;overflow:auto;padding:2px 4px 2px 2px}
+.name-row{display:flex;align-items:center;gap:9px}
+.name-row input{min-width:0;flex:1;background:rgba(7,12,28,.58);border:1px solid rgba(255,255,255,.16);border-radius:13px;padding:13px 14px;color:#fff;font:15px Tahoma;outline:none;transition:.2s}
+.name-row input:focus{border-color:#a78bfa;box-shadow:0 0 0 3px #a78bfa25}
+.name-row input::placeholder{color:#78839f}
+.remove{width:42px;height:42px;padding:0;flex:0 0 42px;font-size:20px;color:#ffd3df}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.glass{color:#f7f7ff;background:linear-gradient(135deg,rgba(255,255,255,.19),rgba(255,255,255,.055));border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 1px rgba(255,255,255,.17),0 7px 22px #0003;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:14px;padding:12px 17px;font:bold 14px Tahoma;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
+@media(hover:hover) and (pointer:fine){.glass:hover:not(:disabled){transform:translateY(-2px);border-color:#c4b5fd;background:linear-gradient(135deg,rgba(167,139,250,.3),rgba(255,255,255,.08))}}
+.glass:disabled{opacity:.45;cursor:not-allowed}
+.add{flex:1;color:#e9e4ff}
+.clear{color:#ffdce5}
+.count{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:13px}
+.wheel-panel{display:flex;flex-direction:column;align-items:center}
+.wheel-wrap{position:relative;width:min(100%,480px);aspect-ratio:1;margin:0 auto 18px;isolation:isolate}
+canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 25px #0008)}
+.pointer{position:absolute;z-index:3;top:-5px;left:50%;transform:translateX(-50%);transform-origin:50% 9px;width:48px;height:65px;display:flex;justify-content:center;filter:drop-shadow(0 5px 7px #0009);will-change:transform}
+.pointer:before{content:"";position:absolute;top:0;width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,#fff,#c4b5fd 55%,#7c3aed);border:3px solid #fff;box-shadow:0 0 0 4px #a78bfa55,inset 0 2px 5px #fff}
+.pointer:after{content:"";position:absolute;top:31px;width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:30px solid #f4efff;filter:drop-shadow(0 2px 2px #0005)}
+.spin{width:min(100%,330px);padding:16px 20px;font-size:18px;background:linear-gradient(120deg,rgba(139,92,246,.48),rgba(34,211,238,.22));border-color:rgba(196,181,253,.55);box-shadow:inset 0 1px #ffffff55,0 10px 30px #6d4bd044}
+.result{width:100%;min-height:86px;margin-top:16px;border:1px solid rgba(196,181,253,.35);background:linear-gradient(135deg,rgba(139,92,246,.16),rgba(34,211,238,.08));border-radius:18px;padding:15px;text-align:center;box-shadow:inset 0 1px #ffffff12}
+.result small{color:#c4b5fd;display:block;margin-bottom:7px}
+#winner{font-size:clamp(22px,4vw,30px);font-weight:bold;overflow-wrap:anywhere;color:#fff;text-shadow:0 2px 16px #a78bfa88}
+.note{font-size:12px;color:var(--muted);line-height:1.8;margin-top:13px;text-align:center}
+
+.winner-overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(4,7,18,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.winner-overlay.show{opacity:1;visibility:visible}
+.winner-card{width:min(440px,100%);padding:30px 24px 24px;text-align:center;border:1px solid rgba(255,255,255,.25);border-radius:28px;background:linear-gradient(145deg,rgba(48,43,91,.97),rgba(18,28,55,.97));box-shadow:0 25px 90px #0009,inset 0 1px #ffffff35;transform:translateY(18px) scale(.96);transition:transform .3s}
+.winner-overlay.show .winner-card{transform:translateY(0) scale(1)}
+.winner-spark{font-size:28px;color:#f5d58a;margin-bottom:10px;filter:drop-shadow(0 0 12px #f5d58a66)}
+.winner-card h2{font-size:25px;margin:8px 0 18px;color:#f7f8ff}
+.winner-card h2::after{content:'';display:block;width:54px;height:3px;margin:13px auto 0;border-radius:9px;background:linear-gradient(90deg,#a78bfa,#67e8f9)}
+.winner-name{font-size:clamp(30px,8vw,44px);font-weight:bold;overflow-wrap:anywhere;color:#fff;text-shadow:0 0 25px #a78bfa;margin:8px 0 24px}
+.winner-close{min-width:150px;letter-spacing:.7px;font-family:Arial,Tahoma,sans-serif;font-size:15px}
+@media(prefers-reduced-motion:reduce){.winner-overlay,.winner-card{transition:none!important}.glass{transition:none!important}}
+
+@media(max-width:780px){main{padding-top:25px}.layout{grid-template-columns:1fr}.wheel-panel{grid-row:1}.panel{padding:18px}.wheel-wrap{width:min(88vw,430px)}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>🎡 گردونه شانس</h1>
+<p>اسم‌ها رو اضافه کن، گردونه رو بچرخون و انتخاب تصادفی رو ببین.</p>
+</header>
+<div class="layout">
+<section class="panel">
+<h2>لیست اسم‌ها</h2>
+<p class="sub">برای هر اسم یک کادر جدا داری. با دکمهٔ «افزودن اسم» هرچقدر خواستی گزینه اضافه کن.</p>
+<div class="name-list" id="nameList"></div>
+<div class="actions">
+<button class="glass add" id="add">＋ افزودن اسم</button>
+<button class="glass clear" id="clear">پاک کردن همه</button>
+</div>
+<div class="count"><span id="count">۰ اسم</span><span>کادرهای خالی نادیده گرفته می‌شن</span></div>
+</section>
+<section class="panel wheel-panel">
+<div class="wheel-wrap">
+<div class="pointer" aria-hidden="true"></div>
+<canvas id="wheel" width="1000" height="1000" aria-label="گردونه انتخاب تصادفی"></canvas>
+</div>
+<button class="glass spin" id="spin">بچرخون! ✨</button>
+<div class="result" aria-live="polite"><small>اسم انتخاب‌شده</small><div id="winner">هنوز انتخابی انجام نشده</div></div>
+
+</section>
+</div>
+</main>
+
+<div class="winner-overlay" id="winnerOverlay" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+  <div class="winner-card">
+    <div class="winner-spark" aria-hidden="true">✦ ✨ ✦</div>
+    <h2 id="winnerTitle">نتیجه گردونه</h2>
+    <div class="winner-name" id="winnerPopupName" aria-live="polite"></div>
+    <button class="glass winner-close" id="winnerClose" type="button">OK</button>
+  </div>
+</div>
+<script>
+const listEl=document.getElementById('nameList'),canvas=document.getElementById('wheel'),ctx=canvas.getContext('2d');
+const countEl=document.getElementById('count'),winnerEl=document.getElementById('winner'),spinBtn=document.getElementById('spin');
+const winnerOverlay=document.getElementById('winnerOverlay'),winnerPopupName=document.getElementById('winnerPopupName');
+const pointer=document.querySelector('.pointer'),winnerClose=document.getElementById('winnerClose');
+let previousSector=null,previousFrameTime=0,returnFocus=null;
+const palette=['#7566e8','#e66d9a','#e9a34f','#23a99b','#438bd1','#a86bd1','#c99a37','#4f9478','#d66b57','#6474c7','#bd78a4','#398d9e'];
+let angle=0,spinning=false;
+const fa=n=>new Intl.NumberFormat('fa-IR').format(n);
+function getNames(){return [...listEl.querySelectorAll('input')].map(x=>x.value.trim()).filter(Boolean)}
+function addInput(value=''){
+ const row=document.createElement('div');row.className='name-row';
+ const input=document.createElement('input');input.type='text';input.maxLength=48;input.placeholder='اسم را وارد کن...';input.value=value;input.autocomplete='off';input.setAttribute('aria-label','اسم');
+ const remove=document.createElement('button');remove.className='glass remove';remove.type='button';remove.textContent='×';remove.title='حذف این اسم';
+ input.addEventListener('input',()=>{if(!spinning){draw();winnerEl.textContent='هنوز انتخابی انجام نشده'}});
+ remove.addEventListener('click',()=>{if(spinning)return;row.remove();if(!listEl.children.length)addInput();draw();winnerEl.textContent='هنوز انتخابی انجام نشده'});
+ row.append(input,remove);listEl.append(row);if(!value)input.focus();draw();
+}
+function updateCount(){countEl.textContent=fa(getNames().length)+' اسم'}
+function draw(){
+ const names=getNames(),w=canvas.width,c=w/2,r=430;
+ ctx.clearRect(0,0,w,w);
+ ctx.save();ctx.beginPath();ctx.arc(c,c,r+24,0,Math.PI*2);ctx.fillStyle='#d9d4ff';ctx.shadowColor='#9d8bff';ctx.shadowBlur=28;ctx.fill();ctx.restore();
+ if(!names.length){
+  ctx.beginPath();ctx.arc(c,c,r,0,Math.PI*2);ctx.fillStyle='#242b48';ctx.fill();
+  ctx.fillStyle='#d7d5ef';ctx.font='bold 34px Tahoma';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('اسم‌ها را اضافه کن',c,c);updateCount();return;
+ }
+ const step=2*Math.PI/names.length;
+ names.forEach((name,i)=>{
+  const start=angle+i*step-Math.PI/2;
+  ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,start,start+step);ctx.closePath();
+  const grad=ctx.createLinearGradient(c+Math.cos(start)*r,c+Math.sin(start)*r,c-Math.cos(start)*r,c-Math.sin(start)*r);
+  grad.addColorStop(0,palette[i%palette.length]);grad.addColorStop(1,palette[(i+3)%palette.length]);
+  ctx.fillStyle=grad;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.78)';ctx.lineWidth=4;ctx.stroke();
+  // Labels remain horizontal/upright instead of rotating with each slice.
+  const mid=start+step/2,rad=r*.62,x=c+Math.cos(mid)*rad,y=c+Math.sin(mid)*rad;
+  ctx.save();ctx.translate(x,y);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';
+  let font=Math.min(35,Math.max(13,Math.floor(350/Math.max(9,name.length))));
+  ctx.font=`bold ${font}px Tahoma,Arial`;
+  const maxW=Math.max(40,Math.min(210,r*step*.92));
+  while(ctx.measureText(name).width>maxW&&font>12){font--;ctx.font=`bold ${font}px Tahoma,Arial`}
+  let shown=name;while(ctx.measureText(shown).width>maxW&&shown.length>3)shown=shown.slice(0,-2)+'…';
+  ctx.shadowColor='#111827aa';ctx.shadowBlur=5;ctx.fillText(shown,0,0,maxW);
+  ctx.restore();
+ });
+ ctx.beginPath();ctx.arc(c,c,65,0,Math.PI*2);ctx.fillStyle='#f8f7ff';ctx.fill();
+ ctx.beginPath();ctx.arc(c,c,52,0,Math.PI*2);ctx.fillStyle='#242044';ctx.fill();
+ ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 34px Tahoma';ctx.fillText('✦',c,c+1);
+ updateCount();
+}
+function sectorAtPointer(value,length){
+  const step=Math.PI*2/length;
+  const local=(((-value)%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+  return Math.floor(local/step)%length;
+}
+function tapPointer(angularVelocity){
+  const strength=Math.max(.25,Math.min(1,angularVelocity/.035));
+  const angleKick=5+strength*9, lift=2+strength*4;
+  const duration=210-strength*95;
+  if(pointer._tapAnimation)pointer._tapAnimation.cancel();
+  pointer._tapAnimation=pointer.animate([
+    {transform:'translateX(-50%) rotate(0deg) translateY(0)'},
+    {transform:`translateX(-50%) rotate(${angleKick}deg) translateY(${lift}px)`,offset:.28},
+    {transform:'translateX(-50%) rotate(-2deg) translateY(1px)',offset:.58},
+    {transform:'translateX(-50%) rotate(0deg) translateY(0)'}
+  ],{duration,easing:'cubic-bezier(.2,.75,.25,1)' });
+}
+function randomIndex(length){
+ // Rejection sampling avoids modulo bias when using Web Crypto.
+ if(window.crypto&&crypto.getRandomValues){const range=0x100000000,limit=range-range%length;let n;do{const a=new Uint32Array(1);crypto.getRandomValues(a);n=a[0]}while(n>=limit);return n%length}
+ return Math.floor(Math.random()*length);
+}
+function spin(){
+ const names=getNames();if(spinning)return;
+ if(names.length<2){winnerEl.textContent=names.length?'برای چرخش حداقل دو اسم وارد کن':'اول اسم‌ها رو وارد کن';return}
+ spinning=true;spinBtn.disabled=true;winnerEl.textContent='در حال چرخش...';
+ const index=randomIndex(names.length),step=2*Math.PI/names.length;
+ const current=((angle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+ const desired=((-(index+.5)*step)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+ const delta=((desired-current)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+ const start=angle,turns=7+randomIndex(5),finish=start+Math.PI*2*turns+delta;
+ const duration=5200+randomIndex(1200),begin=performance.now();
+ function frame(now){
+  const t=Math.min(1,(now-begin)/duration),ease=1-Math.pow(1-t,5);
+  angle=start+(finish-start)*ease;draw();
+  if(t<1)requestAnimationFrame(frame);
+  else{angle=finish;draw();winnerEl.textContent=names[index];winnerPopupName.textContent=names[index];showWinner();spinning=false;spinBtn.disabled=false}
+ }
+ requestAnimationFrame(frame);
+}
+function showWinner(){
+  returnFocus=document.activeElement;
+  winnerOverlay.classList.add('show');
+  window.setTimeout(()=>winnerClose.focus(),30);
+}
+function closeWinner(){
+  winnerOverlay.classList.remove('show');
+  if(returnFocus&&typeof returnFocus.focus==='function')returnFocus.focus();
+}
+winnerClose.addEventListener('click',closeWinner);
+winnerOverlay.addEventListener('click',(event)=>{if(event.target===winnerOverlay)closeWinner()});
+document.addEventListener('keydown',(event)=>{
+  if(event.key==='Escape'&&winnerOverlay.classList.contains('show'))closeWinner();
+  if(event.key==='Tab'&&winnerOverlay.classList.contains('show')){
+    event.preventDefault();winnerClose.focus();
+  }
+});
+document.getElementById('add').addEventListener('click',()=>{if(!spinning)addInput()});
+document.getElementById('clear').addEventListener('click',()=>{if(spinning)return;listEl.innerHTML='';addInput();winnerEl.textContent='هنوز انتخابی انجام نشده';draw()});
+spinBtn.addEventListener('click',spin);
+addInput();addInput();draw();
+</script>
+</body>
+</html>
